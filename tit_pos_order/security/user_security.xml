@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<odoo>
+<data > 
+    <record id="group_vendeur" model="res.groups">
+        <field name="name">Est un vendeur</field>  
+    </record>
+    <record id="group_caissier" model="res.groups">
+        <field name="name">Est un caissier</field>  
+    </record>
+</data>
+</odoo>
