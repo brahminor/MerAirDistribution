@@ -32,7 +32,6 @@ odoo.define('tit_pos_paiement.PaymentScreenPaymentLines', function (require) {
                    if (confirmed) {
                     
                     // var output= payload.split(' ');
-                    console.log("payload",payload)
                     check_number  = payload[0];
                     check_date = payload[1];
                      if (check_number &&  check_date)
@@ -48,10 +47,12 @@ odoo.define('tit_pos_paiement.PaymentScreenPaymentLines', function (require) {
                           });
                       }
                       for (var i = 0; i < lines.length; i++) {
-                        console.log("row",lines[i]);
-                        lines[i].set_check_number(check_number);
-                        lines[i].set_check_date(check_date);
-
+                        
+                        if (lines[i].cid === cid.detail.cid) {
+                            lines[i].set_check_number(check_number);
+                            lines[i].set_check_date(check_date);
+                            return;
+                        }
                       }
 
                    }
@@ -84,9 +85,12 @@ odoo.define('tit_pos_paiement.PaymentScreenPaymentLines', function (require) {
                               body: this.env._t('Numéro de chéque est obligatoire.'),
                           });
                       }
-
+                      
                       for (var i = 0; i < lines.length; i++) {
-                        lines[i].set_check_number(check_number);
+                        if (lines[i].cid === cid.detail.cid) {
+                            lines[i].set_check_number(check_number);
+                            return;
+                        }
                       }
 
                    }
@@ -120,8 +124,11 @@ odoo.define('tit_pos_paiement.PaymentScreenPaymentLines', function (require) {
                           });
                       }
                       for (var i = 0; i < lines.length; i++) {
-                        console.log("row",lines[i]);
-                        lines[i].set_check_date(check_date);
+                        
+                        if (lines[i].cid === cid.detail.cid) {
+                            lines[i].set_check_date(check_date);
+                            return;
+                        }
                       }
                    }
                

@@ -4,8 +4,8 @@
     'name': "Tit pos paiement",
 
     "version": "1.0.1",
-    "author": "tit solution",
-    "website": "",
+    "author": "Sogesi",
+    "website": "https://www.sogesi-dz.com",
     "sequence": 0,
     "depends": [
             "point_of_sale",

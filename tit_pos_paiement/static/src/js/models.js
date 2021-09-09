@@ -32,14 +32,21 @@ models.Paymentline = models.Paymentline.extend({
         this.check_date = json.check_date;                      
     },
     set_check_number: function(check_number){
-                this.check_number = check_number;
-                console.log("this.check_number",this.check_number);
-                this.trigger('change',this);
+        this.order.assert_editable();
+        this.check_number = check_number;
+        
+        this.trigger('change',this);
+
+                
         },
     set_check_date: function(check_date){
-                this.check_date = check_date;
-                this.trigger('change',this);
+        this.order.assert_editable();
+        this.check_date = check_date;
+        
+        this.trigger('change',this);
         },
+
+
 
 });
 
