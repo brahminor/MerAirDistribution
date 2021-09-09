@@ -6,8 +6,9 @@ odoo.define('tit_pos.screens', function(require) {
     var { Gui } = require('point_of_sale.Gui');
     var models = require('point_of_sale.models');
     const { useState } = owl.hooks;
-    models.load_fields('res.partner',[ 'property_account_position_id', 'company_type', 'child_ids', 'type', 'website', 'siren_company', 'nic_company','credit_limit']);
+    var rpc = require('web.rpc');
     
+    models.load_fields('res.partner',[ 'property_account_position_id', 'company_type', 'child_ids', 'type', 'website', 'siren_company', 'nic_company','credit_limit']);
 
     const POSSaveClientOverride = ClientDetailsEdit =>
         class extends ClientDetailsEdit {
@@ -22,11 +23,11 @@ odoo.define('tit_pos.screens', function(require) {
                     if (child_id.type === 'contact') {
                         child = child_id
                     }
-                }            
+                }
             }
             if (child){
                 this.contact_associe = useState({id : child.id , name: child.name, phone: child_id.phone, email: child_id.email});
-                } 
+                }
             }
 
             /**
@@ -52,32 +53,33 @@ odoo.define('tit_pos.screens', function(require) {
             /**
             * @override
             */
-            async saveChanges(event) { 
+            async saveChanges(event) {
             try {
 
                 let processedChanges = {};
-                let changes_contacts = {};
+                
                 if (this.contact_associe){
+                    
                     processedChanges['contact_id'] = this.contact_associe.id
                 }
                 else{
                     processedChanges['contact_id'] = 0
                 }
- 
+
                 for (let [key, value] of Object.entries(this.changes)) {
                     if (this.intFields.includes(key)) {
                         if((key == 'contact_name') || (key == 'contact_phone') || (key == 'contact_email')){
                             processedChanges[key] = parseInt(value) || false;
                         }
                         else{
-                            processedChanges[key] = parseInt(value) || false; 
-                        } 
+                            processedChanges[key] = parseInt(value) || false;
+                        }
                     } else {
                         if((key == 'contact_name') || (key == 'contact_phone') || (key == 'contact_email')){
                             processedChanges[key] = value;
                         }
                         else{
-                            processedChanges[key] = value;  
+                            processedChanges[key] = value;
                         }
                     }
                 }
@@ -96,12 +98,10 @@ odoo.define('tit_pos.screens', function(require) {
                       title: ('Le nom et prénom du client est requis'),
                     });
                 }
-                
+
                 if (processedChanges.property_account_position_id > 0){
                     processedChanges['property_account_position_id'] = parseInt(processedChanges.property_account_position_id) || 0
                 }
-
-                
 
                 processedChanges['company_type'] = company_type_checked_value
                 if (company_type_checked_value === 'company') {
@@ -125,30 +125,14 @@ odoo.define('tit_pos.screens', function(require) {
                       title: ('SIREN est requis'),
                         });
                     }
-
-                    //partie contact associée au client
-                    if ((!this.contact_associe && !processedChanges.contact_name)
-                        || (processedChanges.contact_name === '')){
-                        return this.showPopup('ErrorPopup', {
-                          title:('Le nom du contact est requis'),
-                        });
                     }
-                    if ((!this.contact_associe && !processedChanges.contact_email)
-                        || (processedChanges.contact_email === '')){
-                        return this.showPopup('ErrorPopup', {
-                            title:('Le courriel du contact est requis'),
-                        });
-                    }
-                    if ((!this.contact_associe && !processedChanges.contact_phone)
-                        || (processedChanges.contact_phone === '')){
-                            return this.showPopup('ErrorPopup', {
-                              title:('Le téléphone du contact est requis'),
-                            });
-                        }
-                    }
-
+                  if(!processedChanges.hasOwnProperty('contact_name')){
+                     processedChanges['contact_name']='';
+                 }
                 processedChanges.id = this.props.partner.id || false;
+                
                 this.trigger('save-changes', { processedChanges });
+                
             }
             } catch (error) {
                 throw error;

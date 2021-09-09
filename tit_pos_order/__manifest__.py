@@ -4,11 +4,11 @@
     'name': "Tit pos order",
 
     "version": "1.0.1",
-    "author": "tit solution",
-    "website": "",
+    "author": "Sogesi",
+    "website": "https://www.sogesi-dz.com",
     "sequence": 0,
     "depends": [
-            "point_of_sale"
+            "point_of_sale", "tit_base"
     ],
     "category": "Point of Sale",
     'license': 'LGPL-3',
@@ -27,8 +27,10 @@
             "static/src/xml/Menu_screens/TicketScreenEnAttente.xml",
             "static/src/xml/Menu_screens/category_screen.xml",
             "static/src/xml/Menu_screens/CustomTicketButtons.xml",
+            "static/src/xml/Menu_screens/CommandesValider.xml",
+            "static/src/xml/Payment_screen/Invoice.xml",
             "static/src/xml/Payment_screen/PaymentScreen.xml",
-            
+
             
         ],
     'images': ['static/description/images/icon.png'],

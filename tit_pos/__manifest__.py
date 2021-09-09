@@ -4,11 +4,11 @@
     'name': "Tit pos solution",
 
     "version": "1.0.1",
-    "author": "tit solution",
-    "website": "",
+    "author": "Sogesi",
+    "website": "https://www.sogesi-dz.com",
     "sequence": 0,
     "depends": [
-            "point_of_sale", "contacts", "web", "base"
+            "point_of_sale", "tit_base"
     ],
     "category": "Point of Sale",
     'license': 'LGPL-3',
@@ -16,7 +16,6 @@
     """,
     "data": [
         'templates/point_of_sale_assets.xml',
-        'views/res_partner_view.xml',
         'views/accountFiscalPosition_view.xml'
     ],
     'qweb': [

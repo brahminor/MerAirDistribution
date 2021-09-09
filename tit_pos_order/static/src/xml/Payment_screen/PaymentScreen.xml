@@ -10,6 +10,14 @@
                    </div>
                </div>
            </xpath>
+
+           <xpath expr="//div[hasclass('customer-button')]" position="before">
+                   <section class="debloquer_client" >
+                      <label class="switch"> Débloquer le client
+                        <input type="checkbox" id="debloc_client" name="debloc_client" value="yes"/>
+                      </label>
+                   </section>
+            </xpath>
            
     </t>
 </templates>

@@ -21,6 +21,7 @@
                             <field name="session_id"/>
                              <field name="config_id"/>
                              <field name="journal_id"/>
+                             <field name="commande_suivante" invisible="1"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                         <notebook colspan="4">
@@ -71,6 +72,7 @@
                     <field name="partner_id"/>
                     <field name="date"/>
                     <field name="session_id"/>
+                    <field name="acompte"/>
                     <field name="state"/>
                 </tree>
             </field>

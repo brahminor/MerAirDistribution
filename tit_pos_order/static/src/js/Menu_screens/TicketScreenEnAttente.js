@@ -7,6 +7,8 @@ const PosComponent = require('point_of_sale.PosComponent');
     const { useListener } = require('web.custom_hooks');
     const { posbus } = require('point_of_sale.utils');
     var models = require('point_of_sale.models');
+    var rpc = require('web.rpc');
+
     //load waiting orders
     models.load_models({
         model: 'pos.commande',
@@ -37,26 +39,78 @@ const PosComponent = require('point_of_sale.PosComponent');
     class TicketScreenEnAttente extends PosComponent {
         constructor() {
             super(...arguments);
-            console.log("tickets en attente...")   
+            var self = this; 
             this.commandes_recupere = this.env.pos.commandes
             this.commandes_lines_recupere = this.env.pos.commandes_lines
-            //console.log(this.commandes_recupere)
-            //console.log(this.commandes_lines_recupere)
-        }
-        back() { 
 
-            //console.log("back")
+            useListener('filter-selected', this._onFilterSelected);
+            useListener('search', this._onSearch);
+            this.searchDetails = {};
+            this.filter = null;
+            this._initializeSearchFieldConstants();
+        } 
+
+        back() { 
             this.trigger('close-temp-screen'); 
         } 
         getDate(commande) {
             return moment(commande.date).format('DD/MM/YYYY hh:mm A');
         }
+
+        reload_cmd_en_attente(){
+            
+                        /// tester  actualisation de la page de cmd en attente////
+                        var self = this; 
+                        rpc.query({
+                            model: 'pos.commande',
+                            method: 'search_read',
+                            args: [[['state','=','en_attente']], []],
+                        })
+                        .then(function (orders){
+                            self.env.pos.commandes = orders;
+                            rpc.query({
+                            model: 'pos.payment_cmd',
+                            method: 'search_read',
+                            args: [[['pos_commande_id.state', '=', 'en_attente']], []],
+                        })
+                        .then(function (payment_cmd_lines_result){
+                            self.env.pos.payment_cmd_lines = payment_cmd_lines_result;
+                        rpc.query({
+                            model: 'pos.commande.line',
+                            method: 'search_read'
+                            })
+                        .then(function (orders_lines){
+                            self.env.pos.commandes_lines = orders_lines;
+                        }); }); });
+                        /// tester  actualisation de la page de cmd en attente////
+        }     
+
+        async annuler_acompte(id){
+            var l = this;
+            const { confirmed } = await this.showPopup('ValidationCommandePopup', {
+                            title : this.env._t("Annuler acompte"),
+                            body : this.env._t('Voulez-vous vraiment rembourser l\'acompte ? '),
+                            confirmText: this.env._t("Oui"),
+                            cancelText: this.env._t("Non"),
+                        });
+                        if (confirmed) {
+                            //traitement associé à la confirmation de l'alerte de dépassement de la limite
+                           rpc.query({
+                                model: 'pos.commande',
+                                method: 'annuler_acompte',
+                                args: [{
+                                    'id_commande': id,
+                                }]
+                                }).then(function(u){
+                                    
+                                l.reload_cmd_en_attente();
+                                l.showScreen('ProductScreen');
+
+                               })
+                        } 
+        }
         selectOrder(com, id){
-            //console.log("select order")
             let or = this.env.pos.get_order()
-            //console.log(id)
-            //console.log(or)
-            //console.log(com)
             this.load_commande(com, id);
         }
 
@@ -67,8 +121,8 @@ const PosComponent = require('point_of_sale.PosComponent');
             //modifier client de la commande crée
             order.set_client(this.env.pos.db.get_partner_by_id(commande.partner_id[0]));
             // récupérer les order line de la commande selectionnée
+            order.commande_id = id;
             var commande_line = this.get_commande_lines(commande.id)
-            //console.log(commande_line)
             for (var i=0; i<commande_line.length;i++) {
                 var product = this.env.pos.db.get_product_by_id(commande_line[i].product_id[0])
                 var qty = parseFloat(commande_line[i].qty)
@@ -83,15 +137,10 @@ const PosComponent = require('point_of_sale.PosComponent');
                 for (var i=0; i<cmd_paymnt_line.length;i++) {
                     var cashregister = this.get_cashregister_from_journal_id(cmd_paymnt_line[i].payment_method_id[0]);
                     var paymentline = order.add_paymentline(cashregister)
-                    console.log(cmd_paymnt_line[i])
                     order.selected_paymentline.set_amount(cmd_paymnt_line[i].montant)
+                    order.selected_paymentline.set_check_number(cmd_paymnt_line[i].check_number)
+                    order.selected_paymentline.set_check_date(cmd_paymnt_line[i].check_date)
                 }
-
-                /*var cashregister = this.get_cashregister_from_journal_id(commande.journal_id[0]);
-                var amount = commande.acompte
-                var paymentline = order.add_paymentline(cashregister)
-                console.log(paymentline)
-                order.selected_paymentline.set_amount(amount)*/
                 
             }
         }
@@ -101,7 +150,6 @@ const PosComponent = require('point_of_sale.PosComponent');
             cette fonction permet de retourner la commande  en attente qui a id en paramètre
             */
             var commandes = this.env.pos.commandes;
-            //console.log(this.env.pos.commandes)
             for (var i=0; i < commandes.length; i++) {
                 if (commandes[i].id === id) {
                     return commandes[i];
@@ -109,7 +157,6 @@ const PosComponent = require('point_of_sale.PosComponent');
             }
         }
         get_cmd_payment_lines(cmd_id){
-            console.log("dfghbnj,")
             var lines = [];
             var cmd_pay_lignes = this.env.pos.payment_cmd_lines;
             for (var i=0; i < cmd_pay_lignes.length; i++) {
@@ -117,7 +164,6 @@ const PosComponent = require('point_of_sale.PosComponent');
                     lines.push(cmd_pay_lignes[i]);
                 }
             }
-            console.log(lines)
             return lines
         }
         get_commande_lines(commande_id) {
@@ -144,12 +190,76 @@ const PosComponent = require('point_of_sale.PosComponent');
             */
             for (var i in this.env.pos.payment_methods) {
                 if (this.env.pos.payment_methods[i].id === journal_id) {
-                    console.log("yes")
                     return this.env.pos.payment_methods[i]
                 }
             }
         }
 
+        get CmdEnAttenteFiltre() {
+            /*
+            Cette fonction permet de retourner la liste des commandes
+            en attente avec filtre appliqué
+            */
+            const filterCheck = (commandes) => {
+                if (this.filter) {
+                    const screen = commandes.get_screen_data();
+                    return this.filter === this.constants.screenToStatusMap[screen.name];
+                }
+                return true;
+            };
+            const { fieldValue, searchTerm } = this.searchDetails;
+            const fieldAccessor = this._searchFields[fieldValue];
+            const searchCheck = (commandes) => {
+                if (!fieldAccessor) return true;
+                const fieldValue = fieldAccessor(commandes);
+                if (fieldValue === null) return true;
+                if (!searchTerm) return true;
+                return fieldValue && fieldValue.toString().toLowerCase().includes(searchTerm.toLowerCase());
+            };
+            const predicate = (commandes) => {
+                return filterCheck(commandes) && searchCheck(commandes);
+            };
+            return this.env.pos.commandes.filter(predicate);
+        }
+        
+        get searchBarConfig() {
+            // cette fonction est associée à  la barre de recherche
+            return {
+                searchFields: this.constants.searchFieldNames,
+                filter: { show: false, options: {} },
+            };
+        }
+        get _searchFields() {
+            const { Customer } = this.getSearchFieldNames();
+            var fields = {
+                [Customer]: (commandes) => commandes.partner_id[1],
+            };
+            return fields;
+        }
+        _initializeSearchFieldConstants() {
+            this.constants = {};
+            Object.assign(this.constants, {
+                searchFieldNames: Object.keys(this._searchFields)
+            });
+        }
+        _onFilterSelected(event) {
+            this.filter = event.detail.filter;
+            this.render();
+        }
+        _onSearch(event) {
+            const searchDetails = event.detail;
+            Object.assign(this.searchDetails, searchDetails);
+            this.render();
+        }
+        getSearchFieldNames() {
+            /*
+                cette fonction permet de retourner le nom du champs à utiliser
+                pour faire le filtre
+            */
+            return {
+                Customer: this.env._t('client'),
+            };
+        }
     }
     TicketScreenEnAttente.template = 'TicketScreenEnAttente';
 

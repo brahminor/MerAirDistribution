@@ -16,4 +16,6 @@ class resUsers(models.Model):
             return 1
         elif user_actif and user_actif.has_group('tit_pos_order.group_caissier'):
             return 2
+        elif user_actif and user_actif.has_group('tit_pos_order.group_comptable'):
+            return 3
         return 0

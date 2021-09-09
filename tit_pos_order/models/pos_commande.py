@@ -3,17 +3,19 @@
 from odoo import models, fields, api, _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
+from odoo.exceptions import UserError, ValidationError
 
 class pos_commande(models.Model):
     _name = "pos.commande"
     
     name = fields.Char(track_visibility = 'always')
     journal_id = fields.Many2one('account.journal',string="Journal")
+    commande_suivante = fields.Many2one('pos.commande', string = "Commande suivante", help='Ce champ permet d\'indiquer la commande suivante contenant la suite du paiement')
     partner_id = fields.Many2one('res.partner', string = "Client")
     session_id = fields.Many2one('pos.session', string = "Session")
     config_id = fields.Many2one('pos.config', related = "session_id.config_id", string = "Point de vente", store = True)
     date = fields.Datetime('Date', help = "Date de la commande", default = fields.Datetime.now())
-    state = fields.Selection([('draft','Brouillon') ,('en_attente','En attente'), ('recetionne','Réceptionné'), ('done','Terminé')], string = "Statut")
+    state = fields.Selection([('draft','Brouillon') ,('en_attente','En attente'), ('archived','Archivé'), ('done','Terminé'), ('annule','Remboursée')], string = "Statut")
     currency_id = fields.Many2one('res.currency', string = "Devise" )
     order_line = fields.One2many('pos.commande.line', 'order_id')
     company_id = fields.Many2one('res.company', related = "session_id.config_id.company_id")
@@ -21,6 +23,9 @@ class pos_commande(models.Model):
     currency_id = fields.Many2one('res.currency', string = "Devise", default = lambda self: self.env.user.company_id.currency_id)
     acompte = fields.Monetary('Acompte')
     payment_ids = fields.One2many('pos.payment_cmd', 'pos_commande_id', string='Paiements')
+
+    def unlink(self):
+        raise ValidationError(_('Attention! \n Vous ne pouvez pas supprimer les acomptes déjà validés'))
 
     @api.depends('order_line.price_subtotal')
     def get_amount_total(self):
@@ -48,7 +53,49 @@ class pos_commande(models.Model):
             commande_coordonnee['acompte'] = commande['acompte']
         commande_id = self.create(commande_coordonnee).id
         return commande_id
+
+    @api.model
+    def update_state_archived(self, donne):
+        """
+        Cette fonction permet d'archiver la commande en attente ancienne et remplire
+        le champ commande_suivante par la nouvelle commande qui suit cette commande
+        ancienne afin de payer la suite de l'acompte.
+        
+        """
+        if 'commande_ancienne' in donne and 'commande_nouvelle' in donne:
+            commande_courante = self.env['pos.commande'].search([('id','=',donne['commande_ancienne'])])
+            for i in commande_courante:
+                i.state = 'archived'
+                i.commande_suivante = donne['commande_nouvelle']
     
+    @api.model
+    def update_state_done(self, commande_id):
+        commande_courante = self.env['pos.commande'].search([('id','=',commande_id)])
+        for i in commande_courante:
+            i.state = 'done'
+
+    @api.model
+    def annuler_acompte(self, cmd):
+        #cette fonction permet d'annuler l'acompte 
+        if 'id_commande' in cmd:
+            commande_courante = self.env['pos.commande'].search([('id','=',cmd['id_commande'])])
+            for i in commande_courante:
+                i.state = 'annule'
+                #chercher s'il y a des fils associés à cet acompte afin de les annuler aussi
+                commande_archive = self.env['pos.commande'].search([('commande_suivante','=',i.id)])
+                if commande_archive:
+                    self.annuler_cmd_fils(commande_archive)
+            return 1
+        else:
+            return 0
+
+    def annuler_cmd_fils(self, commande_archive):
+        #annuler la commande en paramètre
+        for j in commande_archive:
+            j.state = 'annule'
+            #chercher s'il y a des fils associés à cet acompte afin de les annuler aussi
+            commande_archive2 = self.env['pos.commande'].search([('commande_suivante','=',j.id)])
+            self.annuler_cmd_fils(commande_archive2)
 
 class pos_commande_line(models.Model):
     _name = "pos.commande.line"

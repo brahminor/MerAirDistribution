@@ -1,2 +1,2 @@
-from . import res_partner
 from . import accountFiscalPosition
+from . import res_partner

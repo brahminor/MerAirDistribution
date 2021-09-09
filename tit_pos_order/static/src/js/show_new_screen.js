@@ -8,49 +8,20 @@ odoo.define('tit_pos_order.RewardButton2', function(require) {
     const Registries = require('point_of_sale.Registries');
     const PaymentScreen = require('point_of_sale.PaymentScreen');
     const {update_css}= require('tit_pos_order.CustomCashierScreen')
+    const {verif_groupe} = require('tit_pos_order.verif_group_user')
 
     class CustomRewardButtons2 extends PosComponent {
         constructor() {
            super(...arguments);
-           this.verif_groupe()
+           verif_groupe()
            useListener('click', this.onClick);
         }
         is_available() {
            const order = this.env.pos.get_order();
-           console.log(order)
+           
            return order
         }
-        async verif_groupe(){
-            /* cette fonction permet de vérifier le groupe associé à l'utilisateur 
-            connecté à la session afin de lui mettre les bouton necessaire visibles 
-            et autre invisible selon le groupe trouvé.
-            */
-            let user = {}
-                const order = this.env.pos.get_order();
-                console.log(order)
-                //user['id_user'] = order.employee.user_id[0]
-                user['id_user'] = this.env.pos.user.id
-                
-                let result = await this.rpc({
-                                    model: 'res.users',
-                                    method: 'verification_groupe',
-                                    args: [user],
-                                });
-                if (result == 1){
-                    // mettre le bouton "payer" invisible si le groupe trouvé est vendeur
-                    var contents = $('.pos-content');
-                    contents.find(".pay").hide();
 
-                }
-                else if(result == 2){
-                    // mettre le bouton "valider la commande" invisible si le groupe trouvé est caissier
-                    /*var contents = $('.pos-content');
-                    contents.find(".ctrl_btn").hide(); 
-                    contents.find(".set-customer").hide();*/
-                    update_css(); 
-                } 
-           }
-       
         async onClick() {
             const order = this.env.pos.get_order();
             if (order.attributes.client == null){

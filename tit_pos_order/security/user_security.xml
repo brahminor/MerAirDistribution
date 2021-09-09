@@ -1,11 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <odoo>
 <data > 
+    <record model="ir.module.category" id="module_tit_pos">
+             <field name="name">PDV</field>
+             <field name="description">Les accès des utilisateurs pour l'interface de point de vente (PDV)</field>
+             <field name="sequence">20</field>
+    </record>
     <record id="group_vendeur" model="res.groups">
-        <field name="name">Est un vendeur</field>  
+        <field name="name">Vendeur</field>  
+        <field name="category_id" ref="module_tit_pos"/>
     </record>
     <record id="group_caissier" model="res.groups">
-        <field name="name">Est un caissier</field>  
+        <field name="name">Caissier</field>
+        <field name="category_id" ref="module_tit_pos"/>  
+    </record>
+    <record id="group_comptable" model="res.groups">
+        <field name="name">Comptable</field>  
+        <field name="category_id" ref="module_tit_pos"/>
     </record>
 </data>
 </odoo>
