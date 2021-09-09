@@ -13,7 +13,7 @@ const PosComponent = require('point_of_sale.PosComponent');
     models.load_models({
         model: 'account.move',
         fields: [],
-        domain: function(self){return [['payment_state','in',['not_paid','partial']],['invoice_date_due', '<=',new Date()]]; },
+        domain: function(self){return [['payment_state','in',['not_paid','partial']],['move_type','=','out_invoice'],['state','=','posted'],['invoice_date_due', '<=',new Date()]]; },
         loaded: function(self,factures_non_payees){
             self.factures_non_payees = factures_non_payees;
         },
