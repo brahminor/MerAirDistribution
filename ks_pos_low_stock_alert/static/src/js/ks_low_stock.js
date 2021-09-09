@@ -98,13 +98,16 @@ odoo.define('ks_pos_low_stock_alert.ks_low_stock', function (require) {
         class extends KsPaymentScreen {
 
         async validateOrder(isForceValidate) {
-            if(!this.env.pos.get_order().is_to_invoice()){
-              this.showPopup('ErrorPopup', {
-                    title:('Le choix de la fature est requis'),
-                    body:('Veuillez sélectionner la facture s.v.p ! ')
-                });
-         }else{
-
+            if(this.env.pos.config.cash_rounding) {
+                if(!this.env.pos.get_order().check_paymentlines_rounding()) {
+                    this.showPopup('ErrorPopup', {
+                        title: this.env._t('Rounding error in payment lines'),
+                        body: this.env._t("The amount of your payment lines must be rounded to validate the transaction."),
+                    });
+                    return;
+                }
+            }
+            
             if (await this._isOrderValid(isForceValidate) && ks_utils.ks_validate_order_items_availability(this.env.pos.get_order(), this.env.pos.config)) {
                 // remove pending payments before finalizing the validation
                 for (let line of this.paymentLines) {
@@ -112,7 +115,6 @@ odoo.define('ks_pos_low_stock_alert.ks_low_stock', function (require) {
                 }
                 await this._finalizeValidation();
             }
-        }
         }
     };
 
