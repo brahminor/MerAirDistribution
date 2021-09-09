@@ -33,7 +33,7 @@
                         <div class="order-row pointer" t-on-click="selectFacture(cmd, cmd.id)">
 
                             <div class="col start wide">
-                                <t t-esc="cmd.payment_reference"/> 
+                                <t t-esc="cmd.name"/> 
                             </div>
                             <div class="col start wide">
                                  <t t-esc="cmd.partner_id[1]"/>
