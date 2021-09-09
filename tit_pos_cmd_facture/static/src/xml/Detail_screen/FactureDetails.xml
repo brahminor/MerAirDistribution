@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="FactureDetails" owl="1">
+        <div class="ticket-screen screen">
+            <div class="screen-content">
+                <div class="controls">
+
+                    <div class="buttons">
+                        <button class="button back" t-on-click="showScreen('ProductScreen')">
+                            <i class="fa fa-angle-double-left fa-fw"></i>
+                            <span class="back_text">Back</span>
+                        </button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        </t>
+    </templates>
+
+
