@@ -15,12 +15,12 @@
     "description": """
     """,
     "data": [
-        'security/user_security.xml',
         'views/pos_order_view.xml',
         'templates/point_of_sale_assets.xml',
     ],
     'qweb': [
             'static/src/xml/Screens/facture_button.xml',
+            'static/src/xml/Detail_screen/FactureSavePaiement.xml',
             'static/src/xml/Detail_screen/FactureDetails.xml',
             'static/src/xml/Menu_screens/FacturesNonPayee.xml',
 
