@@ -5,10 +5,13 @@
             
             <script type="text/javascript" src="/tit_pos_cmd_facture/static/src/js/facture_button.js"></script>
 
-            <script type="text/javascript" src="/tit_pos_cmd_facture/static/src/js/Menu_screens/FacturesNonPayee.js"></script>
+            <script type="text/javascript" src="/tit_pos_cmd_facture/static/src/js/Detail_screen/FactureSavePaiement.js"></script>
+            
             <script type="text/javascript" src="/tit_pos_cmd_facture/static/src/js/Detail_screen/FactureDetails.js"></script>
 
-            
+            <script type="text/javascript" src="/tit_pos_cmd_facture/static/src/js/Menu_screens/FacturesNonPayee.js"></script>
+
+
         </xpath>
     </template>
 </odoo>

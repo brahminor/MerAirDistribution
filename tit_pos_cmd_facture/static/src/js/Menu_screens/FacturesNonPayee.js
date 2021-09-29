@@ -1,6 +1,6 @@
 odoo.define('tit_pos_cmd_facture.FacturesNonPayee', function (require) {
     'use strict';
-const PosComponent = require('point_of_sale.PosComponent'); 
+    const PosComponent = require('point_of_sale.PosComponent'); 
     
     const Registries = require('point_of_sale.Registries');
     const IndependentToOrderScreen = require('point_of_sale.IndependentToOrderScreen');
@@ -13,7 +13,7 @@ const PosComponent = require('point_of_sale.PosComponent');
     models.load_models({
         model: 'account.move',
         fields: [],
-        domain: function(self){return [['payment_state','in',['not_paid','partial']],['move_type','=','out_invoice'],['state','=','posted'],['invoice_date_due', '<=',new Date()]]; },
+        domain: function(self){return [['payment_state','in',['not_paid','partial']],['move_type','=','out_invoice'],['state','!=','cancel'],['invoice_date_due', '<=',new Date()]]; },
         loaded: function(self,factures_non_payees){
             self.factures_non_payees = factures_non_payees;
         },
@@ -52,14 +52,25 @@ const PosComponent = require('point_of_sale.PosComponent');
                 return 'Partiellement réglé'
             else return 'Payée'            
         }
-        
 
-        async selectFacture(com, id){
-            var l = this;
+        get_payment_statut(factures_non_payees){
+            var state = factures_non_payees.state
             
+            if (state == 'draft')
+                return 'Brouillon'
+            else if (state == 'posted') 
+                return 'Comptabilisé'
+            else if (state == 'cancel')
+                return 'Annulé'
+            else return 'Brouillon'            
         }
 
-         
+
+        async selectFacture_for_details(facture){
+            
+            this.showScreen('FactureDetails', { facture_selected: facture });
+        }
+ 
         /*
             Partie pour le filtre des factures par rapport au client
         */

@@ -25,12 +25,15 @@
                         <div class="col start wide">Client</div>
                         <div class="col start wide">Date de facturation</div>
                         <div class="col start wide">Date d'échéance</div>
+                        <div class="col start wide">Statut</div> 
                         <div class="col start wide">Etat du paiement</div> 
                         <div class="col start wide">Total à payer</div> 
                         <div class="col start wide">Reste à payer</div> 
+
                     </div>
-                    <t t-foreach="factures_non_payeesFiltre" t-as="cmd" t-key="cmd.cid">
-                        <div class="order-row pointer" t-on-click="selectFacture(cmd, cmd.id)">
+                    <t t-foreach="factures_non_payeesFiltre" t-as="cmd" t-key="cmd.cid" >
+
+                        <div class="order-row pointer" t-on-click="selectFacture_for_details(cmd)">
 
                             <div class="col start wide">
                                 <t t-esc="cmd.name"/> 
@@ -45,6 +48,9 @@
                                 <t t-esc="getDateEcheance(cmd)"/> 
                             </div>
                             <div class="col start wide">
+                                 <t t-esc="get_payment_statut(cmd)"/>
+                            </div>
+                            <div class="col start wide">
                                  <t t-esc="get_payment_state(cmd)"/>
                             </div>
                             
@@ -53,13 +59,11 @@
                             </div>
                             <div class="col start wide">
                                  <t t-esc="cmd.amount_residual"/>
-                            </div>
-                            
-
-                            </div>
-                        </t>
-                    </div>
+                            </div> 
+                        </div>
+                    </t>
                 </div>
-            </div></div></t></templates>
+            </div>
+        </div></div></t></templates>
 
 

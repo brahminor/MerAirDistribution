@@ -94,19 +94,55 @@ const PosComponent = require('point_of_sale.PosComponent');
                             cancelText: this.env._t("Non"),
                         });
                         if (confirmed) {
-                            //traitement associé à la confirmation de l'alerte de dépassement de la limite
-                           rpc.query({
-                                model: 'pos.commande',
-                                method: 'annuler_acompte',
-                                args: [{
-                                    'id_commande': id,
-                                }]
+                            /* vérifier si l'utilisateur courant a le droit de faire le remboursement
+                            ou pas*/
+                            if (l.env.pos.get_cashier()){
+                                let result = await rpc.query({
+                                    model: 'res.users',
+                                    method: 'verification_groupe_user_modified_in_pos',
+                                    args: [l.env.pos.get_cashier().user_id[0]],
                                 }).then(function(u){
-                                    
-                                l.reload_cmd_en_attente();
-                                l.showScreen('ProductScreen');
+                                    if (u !=3){
+                                        l.showPopup('ErrorPopup', {
+                                            title:('Problème des droits d\'accès'),
+                                            body:('Attention! \n Vous n\'avez pas la possibilité de rembourser l\'acompte , \n Veuillez contacter votre administrateur s.v.p ! ')
+                                        });
+                                    }
+                                    else{
+                                        //traitement associé à la confirmation de l'alerte de dépassement de la limite
+                                        rpc.query({
+                                        model: 'pos.commande',
+                                        method: 'annuler_acompte',
+                                        args: [{
+                                            'id_commande': id,
+                                        }]
+                                        }).then(function(u){
+                                            
+                                        l.reload_cmd_en_attente();
+                                        l.showScreen('ProductScreen');
 
-                               })
+                                       })
+                                    }
+                                });
+                            }
+                            else{
+                                //traitement associé à la confirmation de l'alerte de dépassement de la limite
+                                rpc.query({
+                                    model: 'pos.commande',
+                                    method: 'annuler_acompte',
+                                    args: [{
+                                        'id_commande': id,
+                                    }]
+                                    }).then(function(u){
+                                        
+                                    l.reload_cmd_en_attente();
+                                    l.showScreen('ProductScreen');
+
+                                   })
+                            }
+                            
+                            
+                           
                         } 
         }
         selectOrder(com, id){

@@ -2,7 +2,7 @@
 <templates id="template" xml:space="preserve">
 
    <t t-name="CustomTicketButtons" owl="1">
-       <div class="ticket-button">
+       <div class="ticket-button ticket_cmd_attente">
            <div class="with-badge" t-att-badge="count">
                <i class="fa fa-ticket" aria-hidden="true"></i>
            </div>
@@ -11,11 +11,11 @@
    </t>
 
       <t t-name="CommandesValiderButton" owl="1">
-       <div class="ticket-button" >
+       <div class="ticket-button ticket_cmd_valide" >
            <div class="with-badge" t-att-badge="count">
                <i class="fa fa-ticket" aria-hidden="true"></i>
            </div>
-           <div>Commandes valider</div>
+           <div>Commandes validées</div>
        </div>
    </t>
 
