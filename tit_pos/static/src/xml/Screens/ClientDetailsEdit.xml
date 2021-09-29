@@ -42,7 +42,7 @@
 
             <div class='client-detail-avoir'>
                 <span class="label"><b>Avoir</b></span>
-                <input class="detail limit_credit" name="avoir_client"  t-att-value="props.partner.avoir_client || ''" readonly="1" />
+                <input class="detail limit_credit" name="avoir_client"   t-on-change="captureChange" t-att-value="props.partner.avoir_client || ''" readonly="1" />
             </div>
             
 

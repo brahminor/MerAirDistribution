@@ -15,38 +15,92 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
             super(...arguments);
             var self = this;
             this.verif_groupe();
+            this.render_paymentlines();
         }
         async verif_groupe(){
             /* cette fonction permet de vérifier le groupe associé à l'utilisateur 
-            connecté à la session afin de lui mettre le bouton de choix du client 
-            invisible si l'utilisateur connecté apprtient au groupe de caissier.
+            connecté à la session afin de gérer visibilité du bouton du débloque 
+            client
             */
             let user = {}
                 const order = this.env.pos.get_order();
-                user['id_user'] = this.env.pos.user.id
-                
+                var l = this;
                 let result = await this.rpc({
                                     model: 'res.users',
-                                    method: 'verification_groupe',
-                                    args: [user],
+                                    method: 'verification_groupe_user_modified_in_pos',
+                                    args: [l.env.pos.get_cashier().user_id[0]],
                                 });
-                if(result == 2){
-                    /* 
-                    mettre le bouton de modification du client et la case à cocher "débloquer client"
-                    invisible si le groupe trouvé est caissier
-                    */
+                if(result != 3){
+                    //emecher de voir la case de debloquage pour user different que comptable
                     var contents = $('.screen-content');
-                    contents.find(".customer-button").hide();   
-                    contents.find(".debloquer_client").hide();   
+                    contents.find(".debloquer_client").hide();   //débloquer client
+                }
+        }
 
-                } 
-                if(result == 3){
-                    // mettre le bouton de modification du client invisible si le groupe trouvé est comptable
-                    var contents = $('.screen-content');
-                    contents.find(".customer-button").hide();   
-                } }
+        async render_paymentlines () {
+        // show avoir/avance amount 
+        var self = this;
+        var order = this.env.pos.get_order();
+        var line = order ? order.selected_paymentline : false;
+        var client = order.get_client();
+        if (client){
+            rpc.query({
+                        model: 'res.partner',
+                        method: 'avoir_du_client',
+                        args: [this.env.pos.get_order().get_client().id]
+                    }).then(function(result_fct){
+                        if (result_fct > 0){
+                            $('.js_customer_name').text( client ? client.name + '\n' +'(' + result_fct + ')' : _t('Customer') );
+                        }
+                        else{
+                            $('.js_customer_name').text( client ? client.name : _t('Customer') );
+               
+                        }
+                    });
+         }  
+    }
 
         async validateOrder(isForceValidate) {
+
+            var ligne_payements = this.env.pos.get_order().get_paymentlines()
+            var payment_lignes = []
+                    /* 
+                        voir si le montant est positif ou négative psq dans le cas de 
+                        negative donc c un avoir et ne va pas afficher le msg de la limite
+                        de crédit (psq le client entrain de faire un retour)
+                    */
+                    var montant_totale_trouve = 0
+                    var ligne_payements_effectuees = this.env.pos.get_order().get_paymentlines()
+                    for(var i =0; i<ligne_payements_effectuees.length;i++){
+                        montant_totale_trouve += ligne_payements_effectuees[i].amount
+ 
+                        payment_lignes.push({
+                            'id_meth': ligne_payements_effectuees[i].payment_method.id,
+                            'montant': ligne_payements_effectuees[i].amount
+                        })
+                    }
+                    var self2 = this
+                    var avoir_atteind =0;
+                    rpc.query({
+                        model: 'res.partner',
+                        method: 'avoir_depasse_ou_pas',
+                        args: [this.env.pos.get_order().get_client().id, payment_lignes]
+                    }).then(function(result_fct){
+                        if (result_fct > 0){
+                            avoir_atteind = 1;
+                            self2.showPopup('ErrorPopup', {
+                                title:('L\'avoir est insuffisant'),
+                                body:('Vous avez que  '+result_fct+ ' comme avoir')
+                            });
+                        }
+                        else{
+                            avoir_atteind = 0;
+                            self2.validate_order_p(isForceValidate)
+                        }
+                    });
+        }
+        async validate_order_p(isForceValidate){
+            var ligne_payements = this.env.pos.get_order().get_paymentlines()
             var l2 =this;
             if(this.env.pos.config.cash_rounding) {
                 if(!this.env.pos.get_order().check_paymentlines_rounding()) {
@@ -57,8 +111,7 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
                     return;
                 }
             }
-            if (await this._isOrderValid(isForceValidate)) {
-                
+            if (await this._isOrderValid(isForceValidate)) {  
                 if(!this.env.pos.get_order().is_to_invoice()){
                   this.showPopup('ErrorPopup', {
                         title:('Le choix de la fature est requis'),
@@ -66,7 +119,6 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
                     });
                 }
                 else{
-
                     try {
                     let fields = {}
                     fields['id'] = this.env.pos.get_order().attributes.client.id
@@ -77,7 +129,27 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
                         args: [fields],
                     });
                     
-                    if(limite_atteind > 0){
+                    var payment_lignes = []
+                    /* 
+                        voir si le montant est positif ou négative psq dans le cas de 
+                        negative donc c un avoir et ne va pas afficher le msg de la limite
+                        de crédit (psq le client entrain de faire un retour)
+                    */
+                    var montant_totale_trouve = 0
+                    var ligne_payements_effectuees = this.env.pos.get_order().get_paymentlines()
+                    for(var i =0; i<ligne_payements_effectuees.length;i++){
+                        montant_totale_trouve += ligne_payements_effectuees[i].amount
+ 
+                        payment_lignes.push({
+                            'id_meth': ligne_payements_effectuees[i].payment_method.id,
+                            'montant': ligne_payements_effectuees[i].amount
+                        })
+                    }
+                    if(limite_atteind > 0 && montant_totale_trouve > 0){
+                        /*
+                            faire le traitement de vérification de la limite si elle est
+                         éteint dans le cas ou le montant est positive.
+                        */
                         var valll = $('input[name=debloc_client]:checked').val();
                         if (valll === 'yes'){
                             // c'est à dire le comptable a débloqué ce client
@@ -89,13 +161,21 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
                                     this.currentOrder.remove_paymentline(line);
                                 }
                             }
+                            var self = this;
                             await this._finalizeValidation();
                             rpc.query({
-                                            model: 'pos.commande',
-                                            method: 'update_state_done',
-                                            args: [commande_ancienne]
-                                            }).then(function(u){
-                                                l2.reload_cmd_en_attente(); 
+                                model: 'pos.commande',
+                                method: 'update_state_done',
+                                args: [commande_ancienne, self.env.pos.get_order().get_client().id, payment_lignes]
+                            }).then(function(u){
+                                l2.reload_cmd_en_attente(); 
+                                rpc.query({
+                                    model: 'account.move',
+                                    method: 'search_read',
+                                    args: [[['payment_state','in',['not_paid','partial']],['move_type','=','out_invoice'],['state','!=','cancel'],['invoice_date_due', '<=',new Date()]], []],
+                                }).then(function (factures_non_payees){
+                                    self.env.pos.factures_non_payees = factures_non_payees;
+                                });
                             })
                         }
                         else {
@@ -106,6 +186,7 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
                             });
                         } } 
                     else{
+                        var self = this;
                         var order = this.env.pos.get_order()
                         var commande_ancienne = order.commande_id
                         
@@ -117,10 +198,19 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
                         }
                         await this._finalizeValidation();
                         rpc.query({
-                                        model: 'pos.commande',
-                                        method: 'update_state_done',
-                                        args: [commande_ancienne]
-                        })
+                            model: 'pos.commande',
+                            method: 'update_state_done',
+                            args: [commande_ancienne, self.env.pos.get_order().get_client().id, payment_lignes]
+                        }).then(function(u){
+                            rpc.query({
+                                model: 'account.move',
+                                method: 'search_read',
+                                args: [[['payment_state','in',['not_paid','partial']],['move_type','=','out_invoice'],['state','!=','cancel'],['invoice_date_due', '<=',new Date()]], []],
+                            })
+                                .then(function (factures_non_payees){
+                                    self.env.pos.factures_non_payees = factures_non_payees;
+                                });
+                            })
                     } 
                 } catch (error) {
                     if (error.message.code < 0) {
@@ -131,7 +221,7 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
                     } else {
                         throw error;
                     }
-                } } }     
+                } } }
         }
         async IsCustomButton() {
            /*
@@ -147,7 +237,6 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
                 });
             }
             else{
-
                     if (order.selected_paymentline === undefined){
                         return this.showPopup('ErrorPopup', {
                             title:('Le choix de la méthode de paiement est requis'),
@@ -257,7 +346,6 @@ odoo.define('tit_pos_order.PaymentScreenButton', function(require) {
                                 }]
                                 }).then(function(u){
                                 l.reload_cmd_en_attente();
-
                                })
                     });
                     

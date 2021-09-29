@@ -28,6 +28,7 @@
             "static/src/xml/PaymentScreen/ChequeDifPopup.xml",
             "static/src/xml/PaymentScreen/ChequeNormPopup.xml",
             "static/src/xml/PaymentScreen/ChequeKdoPopup.xml",
+            "static/src/xml/Screens/retour_button.xml"
         ],
     'images': ['static/description/images/icon.png'],
     "auto_install": False,

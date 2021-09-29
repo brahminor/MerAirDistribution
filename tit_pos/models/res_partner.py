@@ -102,3 +102,41 @@ class res_partner(models.Model):
         else:
             #c'est à dire le client n'atteind plus la limite
             return 0
+    @api.model
+    def avoir_depasse_ou_pas(self, client_choisi, payment_lignes):
+        """
+        Cette fonction permet de vérifier si le montant à payer par avoir 
+        est > avoir possible du client ou pas
+        
+        @param:
+        -client_choisi : id du client choisi dans le point de vente (pos)
+        -payment_lignes : la liste des lignes des paiements récupérés depuis la page 
+        du paiement du pos (chauqe élément de la liste contient id du moyen de paiement,
+        et montant à payer par ce dernier)
+
+        """
+        montant_avoir_positif = 0
+        for i in payment_lignes:
+            meth_pay = self.env['pos.payment.method'].browse(i.get('id_meth'))
+            if meth_pay and meth_pay[0].methode_avoir and i.get('montant') > 0:
+                    montant_avoir_positif += (i.get('montant'))
+
+        if montant_avoir_positif != 0:
+            # ie il existe des lignes de paiements tel que la méthode de paiement est avoir
+            client_associe = self.env['res.partner'].browse(client_choisi)
+            if client_associe and client_associe[0].avoir_client < montant_avoir_positif:
+                # ie l'avoir est < au montant à payer depuis l'avoir possible du client
+                return client_associe[0].avoir_client
+        return 0
+    @api.model
+    def avoir_du_client(self, client_choisi):
+        """
+        Cette fonction permet de retourner l'avoir du client
+        @param:
+        - client_choisi: l'id du client choisi depuis le pos 
+        """
+        client_associe = self.env['res.partner'].browse(client_choisi)
+        if client_associe:
+            return client_associe[0].avoir_client
+        else:
+            return 0

@@ -8,5 +8,5 @@ class res_partner(models.Model):
     
     siren_company = fields.Char("Siren")
     nic_company = fields.Char("NIC")
-    avoir_client = fields.Char("Avoir")
+    avoir_client = fields.Float("Avoir")
     property_account_position_id = fields.Many2one(default=lambda self: self._get_property_account_position_id())

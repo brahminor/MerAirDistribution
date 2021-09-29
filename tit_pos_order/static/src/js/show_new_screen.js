@@ -10,12 +10,14 @@ odoo.define('tit_pos_order.RewardButton2', function(require) {
     const {update_css}= require('tit_pos_order.CustomCashierScreen')
     const {verif_groupe} = require('tit_pos_order.verif_group_user')
 
+    var rpc = require('web.rpc');
     class CustomRewardButtons2 extends PosComponent {
         constructor() {
            super(...arguments);
-           verif_groupe()
+           verif_groupe()//vérifier groupe de l'utilisateur connecté sur pos
            useListener('click', this.onClick);
         }
+
         is_available() {
            const order = this.env.pos.get_order();
            

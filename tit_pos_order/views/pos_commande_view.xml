@@ -67,7 +67,7 @@
             <field name="name">pos.commande.tree</field>
             <field name="model">pos.commande</field>
             <field name="arch" type="xml">
-                <tree string="Commande" decoration-muted="state == 'done'" create='false' edit="false">
+                <tree string="Commande" decoration-muted="state in ('done','archived','annule')" create='false' edit="false">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="date"/>
