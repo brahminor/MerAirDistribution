@@ -6,6 +6,7 @@ from odoo.addons.base.models.res_partner import WARNING_MESSAGE, WARNING_HELP
 class Pos_payment_method(models.Model):
     _inherit = "pos.payment.method"
 
+    methode_avoir = fields.Boolean('Avoir',help="Cocher cette case si c'est un journal pour l'avoir'")
     deferred_check = fields.Boolean('Chèque différé',help="Cocher cette case si c'est un journal pour les chèques différé dans le pos")
     check= fields.Boolean('Chèque',help="Cocher cette case si c'est un journal pour les chèques dans le pos")
     check_kdo= fields.Boolean('Chèque KDO',help="Cocher cette case si c'est un journal pour les chèques KDO dans le pos")

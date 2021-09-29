@@ -10,6 +10,7 @@
                <field name="deferred_check"/>
                <field name="check"/>
                <field name="check_kdo"/>
+               <field name="methode_avoir"/>
             </xpath>
         </field>
     </record>
